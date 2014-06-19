@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <link rel="stylesheet" href="css/bootstrap.css" />
+    <script src="js/knockout-3.1.0.debug.js"></script>
+    <script src="js/jquery-1.11.1.js"></script>
+    <title>Slides</title>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+			<button data-bind="click: getNames">Load data</button>
+			<div data-bind="foreach: names">
+			<!-- ko text: fullName --> <!-- /ko -->
+			<button data-bind="click: $parent.removePersonalData">Remove</button>
+			<input data-bind="value: firstName" type="text" />
+			<input data-bind="value: lastName" type="text" /><br />
+			</div>
+			<button data-bind="click: addPersonalData">Add</button>
+        </div>
+    </div>
+    <script>
+		function PersonalDataVM(data){
+			var self = this;
+			
+			self.firstName = ko.observable(data.firstName);
+			self.lastName = ko.observable(data.lastName);
+			self.fullName = ko.computed(function(){
+				return self.firstName() + ' ' + self.lastName();
+			});
+			
+			self.removeData = data.removeData;
+		}
+
+        function AppVM() {
+			var self = this;
+			
+			self.names = ko.observableArray([]);
+			self.getNames = function(){
+				$.getJSON("example.json").success(function(json){
+					for(var i in json.names){
+						var data = json.names[i];
+						data.removeData = self.removePersonalData;
+						self.names.push(new PersonalDataVM(data));
+					}
+				});
+			};
+			self.removePersonalData = function(personalDataVM){
+				self.names.remove(personalDataVM);
+			};
+			self.addPersonalData = function(){
+				self.names.push(new PersonalDataVM({
+				 firstName: "def",
+				 lastName: "def"
+				}));
+			};
+        }
+        var app = new AppVM();
+
+        ko.applyBindings(app);
+    </script>
+</body>
+</html>

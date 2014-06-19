@@ -1,0 +1,276 @@
+﻿<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <link rel="stylesheet" href="css/bootstrap.css" />
+    <script src="js/knockout-3.1.0.debug.js"></script>
+    <script src="js/jquery-1.11.1.js"></script>
+    <title>Slides</title>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-1 col-sm-1" data-bind="if: activeSlide() > 0"><a href="javascript:void(0);" class="pull-left btn btn-primary" data-bind="click: prevSlide"><<</a></div>
+            <div class="col-md-10 col-sm-10" data-bind="with: slides()[activeSlide()]">
+                <!-- ko template: { name: templateName, data: data } --> <!-- /ko -->
+            </div>
+            <div class="col-md-1 col-sm-1" data-bind="if: activeSlide() < slides().length - 1"><a href="javascript:void(0);" class="pull-right btn btn-primary" data-bind="click: nextSlide">>></a></div>
+        </div>
+    </div>
+    <script id="FormTemplate" type="text/html">
+        <div>
+            <h1><!--ko text: topic --><!-- /ko --><small data-bind="text: ' ' + firstName() + ' ' + lastName()"></small></h1>
+        </div>
+        <!-- ko if: formActive-->
+        <form class="form-horizontal" data-bind="submit: deactivateForm">
+            <div class="form-group">
+                <label class="col-md-2 col-sm-2" for="frmTopic">Temat prezentacji: </label>
+                <div class="col-sm-10">
+                    <input class="form-control" type="text" id="frmTopic" data-bind="value: topic" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 col-sm-2" for="frmFirstName">Imię: </label>
+                <div class="col-sm-10">
+                    <input class="form-control" type="text" id="frmFirstName" data-bind="value: firstName" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 col-sm-2" for="frmLastName">Nazwisko: </label>
+                <div class="col-sm-10">
+                    <input class="form-control" type="text" id="frmLastName" data-bind="value: lastName" />
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Ok</button>
+        </form>
+        <!-- /ko -->
+    </script>
+    <script id="TableOfContentsTemplate" type="text/html">
+        <div class="text-center">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h1 data-bind="text: topic"></h1>
+                </div>
+                <div class="panel-body">
+                    <ol data-bind="foreach: topics">
+                        <li><a href=" javascrip:void(0);" data-bind="text: topic,click: clickFunction"></a></li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </script>
+    <script id="DefaultSlideTemplate" type="text/html">
+        <div class="panel panel-success">
+            <div class="panel-heading">
+                <div class="text-center">
+                    <h1 data-bind="text: topic"></h1>
+                </div>
+            </div>
+            <div class="panel-body" data-bind="html: content">
+            </div>
+        </div>
+    </script>
+    <script>
+        var firstSlide = "Knockout to biblioteka JavaScript pomagająca w tworzeniu resposywnych\
+                        interfejsów i edytorów interfejsów użytkownika.<br /> Zalety: \
+                        <ul>\
+                        <li><strong>Bezpośrednie powiązanie elementu DOM z JavaScriptowym modelem.</strong></li>\
+                        <li><strong>Automatyczna aktualizacja odpowiednich części UI bez szukania po drzewie DOMu.</strong></li>\
+                        <li><strong>Wbudowany system szablonów (template'ów)</strong></li>\
+                        <li>Darmowy, open source.</li>\
+                        <li>Lekki- 46kB.</li>\
+                        <li>Bez zależności od innych bibliotek.</li>\
+                        <li>Działa na wszystkich przeglądarkach (nawet od IE 6+)</li>\
+                        </ul>";
+        var secondSlide = "Model-View-View Model to wrzozec projektowy wykorzystywany w budowie UI.<br />\
+                        W knockoucie <strong>modelem</strong> są dane, które pobieramy z serwera. <strong>View Model</strong> to obiekt JavaScript, na którym pracuje użytkownik poprzez UI. <br />\
+                        Natomiast rzecz którą widzi użytkownik i na której może klikać, przesuwać suwaki itp. to <strong>View</strong>.";
+        var thirdSlide = "Aby zadeklarować model w knockoucie należy zainicjować jakikolwiek obiekt posiadający pola typu observable. Więc mając nastepujący obiekt<br />\
+                        <code>var myViewModel = function(){</code><br />\
+                         <code>var self = this;</code><br />\
+                         <code>self.firstName = \"John\";</code><br />\
+                         <code>self.lastName = \"Doe\";</code><br />\
+                        <code>}</code> <br /> knockouta aktywujemy w następujący sposób. <br />\
+                        W htmlu należy posłużyć się atrybutem <code>data-bind</code>. Prostym widokiem dla takiego view modelu może być: <br/>\
+                        <code>Imię: &lt;span data-bind=\"text: firstName\"&gt;&lt;/span&gt;</code> <br/> Widok ten wyświetli nam wartość <code>firstName</code> gdy powiążemy go z naszym view modelem. \
+                        Należy to zrobić w następujący sposób: <br />\
+                        <code>ko.applyBindings(myViewModel);</code>.<br /> I to wszystko! Nasz view model jest powiązany z dokumentem i wyświetli <code>Imię: &lt;span&gt;John&lt;/span&gt;</code><hr />\
+                        <p class=\"alert alert-info\"><i class='glyphicon glyphicon-info-sign'></i><strong> A co w przypadku gdy na stronie mamy więcej niezależnych view modeli?</strong><br />\
+                        W takim przypadku należy użyć metody: <br />\
+                        <code>ko.applyBindings(myViewModel, document.getElementById('someElementId');</code> która jako drugi parametr pobiera element DOM.</p>";
+        var fourthSlide = "Esencją knockouta jest to, że wyświetlane elementy UI reagują na każdą zmianę wprowadzoną przez użytkownika czyli podlegają automatycznej aktualizacji.\
+                        Aby dodać tę funkcjonalność do naszego view modelu z poprzedniego slajdu należy użyć observables. <br />\
+                        observable to obiekt JavaScript, który automatycznie wykrywa zmiany. Zmodyfikowany view model wygląda następująco: <br />\
+                        <code>var myViewModel = function(){</code><br />\
+                         <code>var self = this;</code><br />\
+                         <code>self.firstName = ko.observable(\"John\");</code><br />\
+                         <code>self.lastName = ko.observable(\"Doe\");</code><br />\
+                        <code>}</code> <br /> kolejnym plusem użycia observable jest to, że nie trzeba <strong>w ogóle</strong> zmieniac widoku. Nasz atrybut <code>data-bind=\"text: firstName\"</code> pozostaje bez zmian,\
+                        a wyświetlany tekst będzie reagował na wprowadzone zmiany (na przykład inputa typu text z atrybutem <code>data-bind=\"value: firstName\"</code>)\
+                        <p><strong>Zapis i odczyt wartości observable:</strong></p>\
+                        <p>Odczyt: <code>var x = myViewModel.firstName();</code>- x zawiera stringa \"John\" </p>\
+                        <p>Zapis: <code>myViewModel.firstName(\"Johnny\");</code>- firstName jest observablem przechowującym wartość string \"Johnny\"</p>";
+        var fifthSlide = "Wyświetlanie dwóch różnych zmiennych, formatowanie ich wyświetlania itp., może być czasem problematyczne. Jednak dzięki computed observable wszystko możemy\
+                        utrzymać w należytym porządku. <br />\
+                        Są na to różne sposoby, zapewne niektórzy mają swoje własne. W przypadku gdy byśmy chcieli wyświetlić <code>firstName</code> i <code>lastName</code> z naszego view modelu w jednym paragrafie\
+                        można by to zrobić w następujący sposób: <br />\
+                        po stronie view modelu należy zdefiniować zmienną jako ko.computed, która jako parametr przyjmuje callback <br />\
+                        <code>self.fullName = ko.computed(function() { <br />\
+                                return self.firstName() + \" \" + self.lastName(); <br />\
+                                    });</code> <br />\
+                        po stronie HTML wystarczy teraz podpiąć nasz binding do widoku i gotowe <br />\
+                        <code>&lt;span data-bind=\"text: fullName\" &gt;&lt;/span&gt;</code><br />\
+                        W przypadku gdybyśmy nie mieli zapamiętanego <code>this</code> w zmiennej należałoby użyć computed, który jako drugi parametr przyjmuje view model i wyglądało by to tak: <br />\
+                        <code>this.fullName = ko.computed(function() { <br />\
+                                return this.firstName() + \" \" + this.lastName(); <br />\
+                                    }, this);</code> <br />";
+        var sixthSlide = "Zasięg <code>this</code> jest bardzo ważny i najlepiej go zapamiętać w zmiennej dostępnej dla każdego podrzędnego view modelu.\
+                        W naszym przypadku zmienna <code>self</code> reprezentuje view model główny na którym wykonywana jest akcja <code>ko.applyBindings</code>, jednak zaleca się aby każdy podrzędny view model \
+                        zawierał w taki sposób zapamiętany aktualny zasięg <code>this</code>. <hr />\
+                        <p class=\"alert alert-info\"><i class='glyphicon glyphicon-info-sign'></i><strong> Kiedy potrzebny jest <code>self</code>?</strong><br />\
+                        Zawsze w przypadku gdy podrzędny view model ma wykonać akcję, która oddziałowuje na jego rodzica. Na przykład usuwanie z listy- rodzic musi wiedzieć że dziecko wychodzi z domu :)</p>";
+        var seventhSlide = "Zanim przejdziemy do usuwania i dodawania wierszy należy najpierw wyjaśnić czym tak naprawde jest binding, który tak często się w prezentacji pojawia.<br />\
+                        Binding jest powiązaniem elementu DOM z praktycznie dowolnym wyrażeniem JavaScriptu (w większości przypadków ze zmienną naszego view modelu). Składa się z nazwy bindingu i nazwy zmiennej do której ma zostać przywiązany. Jeden element może zostać powiązany z kilkoma bindingami \
+                        oddzielonymi przecinkiem. <br />\
+                        <code>Cellphone: &lt;input data-bind=\"value: cellphoneNumber, enable: hasCellphone\" /&gt;</code><br/><h3>Wbudowane bindingi:</h3>\
+                        <h4>Kontrola tekstu i widzialności:</h4><p><code>visible</code>- ustala czy powiązany element DOM ma być widoczny czy nie, na przykład: <br />\
+                        <code>&lt;div data-bind=\"visible: shouldShowMessage\"&gt;<br />\
+                                You will see this message only when \"shouldShowMessage\" holds a true value.<br />\
+                            &lt;/div&gt;</code></p><p><code>text</code>- wyświetla tekst wewnątrz elementu DOM, na przykład: <br />\
+                        <code>Today's message is:  &lt;span data-bind=\"text: myMessage\"&gt; &lt;/span&gt;</code></p><p><code>html</code>- wyświetla html wewnątrz elementu DOM, na przykład: <br />\
+                        <code>&lt;div data-bind=\"html: details\"&gt;&lt;/div&gt;</code></p><p><code>css</code>- aplikuje css do powiązanego elementu, na przykład: <br />\
+                        <code>&lt;div data-bind=\"css: { profitWarning: currentProfit() < 0 }\"&gt;\
+                                Profit Information\
+                             &lt;/div&gt;</code></p> <p>Oprócz tego <code>style</code> oraz <code>attr</code></p><h4>Kontrola przepływu</h4>\
+                        <p><code>foreach</code>- duplikuje zawartość elementu DOM, na którym jest binding.</p>\
+                        <p><code>if</code>- wyświetla zawartość elementu DOM, na którym jest binding jeśli spełniony jest warunek.</p>\
+                        <p><code>ifnot</code>- wyświetla zawartość elementu DOM, na którym jest binding jeśli warunek nie jest spełniony.</p>\
+                        <p><code>with</code>- zmienia binding context zawartości elementu DOM, na wartość która jest podana dla tego bindingu.</p>";
+        var eighthSlide = "<p>Dla formularzy knockout posiada najwięcej wbudowanych bindingów mianowicie:</p>\
+                        <p><code>click</code>- dodaje event handler na click.</p>\
+                        <p><code>event</code>- dodaje event handler na jakikolwiek event (formuła jest dłuższa, dlatego często używany click ma osobną)</p>\
+                        <p><code>submit</code>- dodaje event handler na submit.</p>\
+                        <p><code>enable</code>- ustawia powiązany element DOM na enabled jeśli spełniony jest powiązany warunek.</p>\
+                        <p><code>value</code>- ustawia wartość inputu.</p>\
+                        <p><code>checked</code>- ustawia wartość w 'checkable' inputach (checkbox, radiobutton) na zaznaczoną w zależnośći od podanej wartości.</p>\
+                        <p><code>options</code>- kontroluje jakie wartości mają się pojawić w drop downie. Funcjonalny binding wyglądałby tak <br />\
+                        <code>&lt;select data-bind=\"options: availableCountries,<br/>\
+                                    optionsText: 'countryName',<br/>\
+                                value: selectedCountry,<br/>\
+                                optionsCaption: 'Choose...'\"&gt;&lt;/select&gt;</code></p>\
+                        </p><p>Oprócz tego <code>disable</code>,<code>hasFocus</code>,<code>uniqeName</code>,<code>selectedOptions</code></p>";
+        var ninethSlide = "Oprócz wcześniejszych metod mamy również wiele pomocniczych metod oraz pluginów. <p>Najczęściej używanymi metodami są:<br />\
+                    <code>ko.toJSON</code>- jako parametr przyjmuje obiekt JavaScript, który może posiadać observable i automatycznie wyciągnie z nich wartości- po tych operacjach zrobi dokładnie to samo co JSON.stringify<br />\
+                    <code>ko.toJS</code>- jako parametr przyjmuje obiekt JavaScript, który może posiadać observable i automatycznie wyciągnie z nich wartośći- po tych operacjach zwróci graf obiektu JavaScript.</p>\
+                    <p>Szablony (templates)</p><p>Tak jak wpomniane na początku prezentacji knockout posiada pełne wsparcie dla szablonów. Przykładowe użycie szablonu w html wygląda tak:</p>\
+                    <code>&lt;div data-bind=\"template: { name: 'someTemplateId', data: dataFromVM }\"&gt;&lt;/div&gt;</code>";
+        function StartForm() {
+            var self = this;
+
+            self.firstName = ko.observable("");
+            self.lastName = ko.observable("");
+            self.topic = ko.observable("");
+            self.formActive = ko.observable(true);
+
+            self.deactivateForm = function () {
+                self.formActive(false);
+            }
+            self.activateForm = function () {
+                self.formActive(true);
+            }
+        }
+
+        function TableOfContentsItem(data) {
+            var self = this;
+
+            self.topic = data.topic;
+            self.clickFunction = data.clickFunction;
+        }
+
+        function Slide(data, templateName) {
+            var self = this;
+
+            self.data = data;
+            self.templateName = templateName;
+        }
+
+        function AppVM() {
+            var self = this;
+
+            self.slides = ko.observableArray([
+                new Slide({
+                    topic: "Spis treści",
+                    topics: ko.observableArray([])
+                }, "TableOfContentsTemplate"),
+                new Slide(new StartForm(), "FormTemplate"),
+                new Slide({
+                    topic: "Czym jest knockout.js?",
+                    content: firstSlide
+                }, "DefaultSlideTemplate"),
+                new Slide({
+                    topic: "MVVM w Knockoucie",
+                    content: secondSlide
+                }, "DefaultSlideTemplate"),
+                new Slide({
+                    topic: "Budowa pierwszego view modelu",
+                    content: thirdSlide
+                }, "DefaultSlideTemplate"),
+                new Slide({
+                    topic: "Dodanie responsywności do modelu (observables)",
+                    content: fourthSlide
+                }, "DefaultSlideTemplate"),
+                new Slide({
+                    topic: "Computed observable",
+                    content: fifthSlide
+                }, "DefaultSlideTemplate"),
+                new Slide({
+                    topic: "\"this\" is important!",
+                    content: sixthSlide
+                }, "DefaultSlideTemplate"),
+                new Slide({
+                    topic: "Bindings",
+                    content: seventhSlide
+                }, "DefaultSlideTemplate"),
+                new Slide({
+                    topic: "Bindingi dla formularzy",
+                    content: eighthSlide
+                }, "DefaultSlideTemplate"),
+                new Slide({
+                    topic: "To nie wszystko",
+                    content: ninethSlide
+                }, "DefaultSlideTemplate")
+            ]);
+            self.activeSlide = ko.observable(0);
+
+            self.prevSlide = function () {
+                if (self.activeSlide() == 0) {
+                    console.warn("You are at first slide");
+                    return;
+                }
+                self.activeSlide(self.activeSlide() - 1);
+            };
+
+            self.nextSlide = function () {
+                if (self.activeSlide() == self.slides().length - 1) {
+                    console.warn("You are at last slide");
+                    return;
+                }
+
+                self.activeSlide(self.activeSlide() + 1);
+            }
+
+            self.slides()[0].data.topics($.map(self.slides(), function (item, index) {
+                return new TableOfContentsItem({
+                    topic: item.data.topic, clickFunction: function () {
+                        self.activeSlide(index);
+                    }
+                });
+            }))
+        }
+        var app = new AppVM();
+
+        ko.applyBindings(app);
+    </script>
+</body>
+</html>
